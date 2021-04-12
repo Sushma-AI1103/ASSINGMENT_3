@@ -7,15 +7,44 @@ Original file is located at
     https://colab.research.google.com/drive/146lWnYQPsem-IKBJTZoNEH-txkk9Wsap
 """
 
-# Commented out IPython magic to ensure Python compatibility.
-# %pip install scikit-commpy
-from scipy.stats import bernoulli
-import commpy
-N=int(1e7)
-x = bernoulli.rvs(0.1,size=N)  #input signals
-y=commpy.channels.bsc(x,0.125)
-count=0
-for i in range(0,N):
-  if y[i]!= x[i]:
-     count=count+1
-print(count/N)
+ from scipy.stats import bernoulli
+ import commpy
+ N=int(1e6)
+ x = bernoulli.rvs(0.1,size=N)  #input signals
+ y=commpy.channels.bsc(x,0.125)
+ count=0
+ s=0
+ b=0
+ start=0
+ begin=0
+ #MAP criterion
+ for i in range(0,N):
+   if x[i]==0 and y[i]==1:
+     start=start+1
+   elif x[i]==1 and y[i]==1:
+     begin=begin+1
+   elif x[i]==0 and y[i]==0:
+     b=b+1
+   elif x[i]==1 and y[i]==0:
+     s=s+1
+ y1m0=False
+ y1m1=False
+ y0m0=False
+ y0m1=False
+ #when Y=1 then  ˆm=0 if    
+ def mapcriterionm0(start,begin,s,b):
+   if start>=begin:
+     y1m0=True
+   elif begin>=start:
+     y1m1=True
+   
+   if b>=s:
+     y0m0=True
+   elif s>=b:
+     y0m1=True
+   return (y1m0 and y0m0)# to know if m0 is reported in both cases
+ if mapcriterionm0(start,begin,s,b):
+   for i in range(0,N):   # since m0 is reported in both cases by the optimum receiver, we need to find the probability of error i.e the signal being misread
+     if x[i]==1:
+       count=count+1
+print(mapcriterionm0(start,begin,s,b)*count/N)
